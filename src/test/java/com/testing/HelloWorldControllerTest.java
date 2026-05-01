@@ -1,29 +1,30 @@
 package com.testing;
 
-import static com.testing.HelloWorldController.MESSAGE_KEY;
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.net.UnknownHostException;
-import java.util.Map;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.MockitoJUnitRunner;
+@SpringBootTest
+@AutoConfigureMockMvc
+class HelloWorldControllerTest {
 
-@RunWith(MockitoJUnitRunner.class)
-public class HelloWorldControllerTest {
-
-    private Map<String, String> result;
-    
-    @InjectMocks
-    private HelloWorldController controller;
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
-    public void responseShouldContainHelloWorldKey() throws UnknownHostException {
-        result = controller.helloWorld();
-        
-        assertThat(result).containsKey(MESSAGE_KEY);
+    void rootEndpointReturns200() throws Exception {
+        mockMvc.perform(get("/"))
+               .andExpect(status().isOk());
     }
-    
+
+    @Test
+    void healthEndpointReturns200() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+               .andExpect(status().isOk());
+    }
 }

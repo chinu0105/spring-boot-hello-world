@@ -1,9 +1,25 @@
-FROM openjdk:8-jdk-alpine
-VOLUME /tmp
+# ── Stage 1: Build ─────────────────────────────────────────────────
+FROM eclipse-temurin:17-jdk-alpine AS builder
+WORKDIR /build
+COPY pom.xml .
+COPY src ./src
 
-ARG JAR_FILE
-ADD target/spring-boot-hello-world-1.0.0-SNAPSHOT.jar app.jar
+RUN apk add --no-cache maven \
+    && mvn clean package -DskipTests
 
-ENV JAR_OPTS=""
-ENV JAVA_OPTS=""
-ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar /app.jar $JAR_OPTS
+# ── Stage 2: Runtime ───────────────────────────────────────────────
+# Minimal JRE-only image — smaller, more secure than full JDK
+FROM eclipse-temurin:17-jre-alpine
+
+LABEL maintainer="chinmaya.mishra0105@gmail.com"
+LABEL description="Spring Boot Hello World — Semtech DevOps Assignment"
+
+WORKDIR /app
+COPY --from=builder /build/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", \
+  "-XX:+UseContainerSupport", \
+  "-XX:MaxRAMPercentage=75.0", \
+  "-jar", "app.jar"]

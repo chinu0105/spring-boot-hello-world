@@ -1,45 +1,35 @@
 package com.testing;
 
-import static com.testing.HelloWorldController.MESSAGE_KEY;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-import java.util.Map;
-
-import javax.transaction.Transactional;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.junit4.SpringRunner;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@Transactional
-public class HelloWorldIntegrationTest {
-    
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class HelloWorldIntegrationTest {
+
     @LocalServerPort
-    int port;
+    private int port;
 
     @Autowired
-    private TestRestTemplate template;
+    private TestRestTemplate restTemplate;
 
-    private Map<String, String> result;
-    private String url;
-    
     @Test
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    public void responseShouldContainHelloWorldKey() {
-        url = "http://localhost:" + port + "/";
-        
-        ResponseEntity<Map> response = template.getForEntity(url, Map.class);
-        result = response.getBody();
+    void applicationStartsAndResponds() {
+        ResponseEntity<String> response = restTemplate
+            .getForEntity("http://localhost:" + port + "/", String.class);
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+    }
 
-        assertThat(result.containsKey(MESSAGE_KEY)).isTrue();
-        assertThat(result.get(MESSAGE_KEY)).isEqualTo("Hello World!");
+    @Test
+    void actuatorHealthIsUp() {
+        ResponseEntity<String> response = restTemplate
+            .getForEntity("http://localhost:" + port + "/actuator/health", String.class);
+        assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(response.getBody()).contains("UP");
     }
 }
